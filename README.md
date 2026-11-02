@@ -78,6 +78,12 @@ one; the Flipper's STM32WB radio provides the peripheral side.
   in `lib/phyphox/core/Serializer.cpp` are cast to `double` because the
   Flipper build uses `-Wdouble-promotion` with `-fsingle-precision-constant`.
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for multi-sensor plans: multiple DS18B20s,
+I2C/SPI/UART sensors, the selection/config UI, and the five-channel phyphox
+BLE limit.
+
 ## Credits
 
 - [phyphox-arduino](https://github.com/phyphox/phyphox-arduino) — phyphox BLE
