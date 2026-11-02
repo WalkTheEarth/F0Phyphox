@@ -1,0 +1,46 @@
+Forum: https://phyphox.org/forums/ -> Discussion -> Experiments and Ideas
+Title: Flipper Zero + DS18B20 as a phyphox BLE temperature sensor
+
+Hi everyone,
+
+I built a small Flipper Zero app that turns the Flipper into a phyphox BLE sensor. It reads a DS18B20 1-Wire thermometer on GPIO pin 17 and streams the temperature to phyphox. No WiFi devboard or custom phone build is needed.
+
+[b]What it does[/b]
+[list]
+[*]Ports the phyphox BLE 2.0 library core (experiment builder, config transfer, data notifications) to the Flipper's built-in STM32WB BLE.
+[*]Exposes the phyphox experiment service cddf0001 and data service cddf1001, so phyphox sees it like an Arduino BLE sensor.
+[*]Samples the DS18B20 at about 1 Hz and shows the live temperature on the Flipper screen.
+[*]Uses the Flipper's 1-Wire/iButton pin (GPIO 17), which has a built-in pull-up.
+[/list]
+
+[b]Wiring[/b]
+[list]
+[*]DS18B20 VDD -> Flipper GPIO 9 (3V3)
+[*]DS18B20 GND -> GPIO 18 (or 8/11)
+[*]DS18B20 DQ -> GPIO 17 (1-Wire)
+[/list]
+Pin 17 already has a pull-up; no external 4.7k resistor is needed.
+
+[b]Install and use[/b]
+1. Download f0phyphox.fap and copy it to SD:/apps/Bluetooth/.
+2. Open "Phyphox DS18B20" on the Flipper; it advertises as FLIP.
+3. In phyphox: + -> Bluetooth device -> FLIP.
+4. The DS18B20 Temperature experiment opens with a live graph and value.
+5. Back exits the app and restores the normal Flipper BLE profile.
+
+[b]Notes[/b]
+[list]
+[*]Flipper BLE only; the Flipper has no WiFi.
+[*]The advertised name is FLIP. The 128-bit phyphox service UUID plus the stack-added flags and TX-power AD elements leave only five characters in the 31-byte legacy advertising packet. A longer name is silently rejected by the ST stack, so FLIP is used with a margin.
+[*]Built against the official dev SDK (API 88.3); tested end-to-end with the phyphox app on a phone, on a Flipper running Unleashed (API 88.19).
+[*]The app uses SKIP ROM, so it expects one DS18B20 on the bus.
+[*]Not affiliated with phyphox or Flipper Devices.
+[/list]
+
+[b]Links[/b]
+[list]
+[*]Source: [url=https://github.com/WalkTheEarth/F0Phyphox]https://github.com/WalkTheEarth/F0Phyphox[/url]
+[*]Download: [url=https://github.com/WalkTheEarth/F0Phyphox/releases/latest]https://github.com/WalkTheEarth/F0Phyphox/releases/latest[/url]
+[/list]
+
+Thanks to the phyphox team for the BLE protocol and the phyphox-arduino library. The DS18B20 read code follows the Flipper example_thermo.
