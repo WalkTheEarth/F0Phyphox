@@ -8,7 +8,7 @@ App(
     fap_category="Bluetooth",
     fap_description="DS18B20 1-Wire thermometer streamed to the phyphox app over BLE",
     fap_author="walktheearth",
-    fap_version="1.0",
+    fap_version="1.0.1",
     sources=[
         "phyphox_app.cpp",
         "phyphox_ble.cpp",

@@ -74,6 +74,10 @@ one; the Flipper's STM32WB radio provides the peripheral side.
 - If it ever stops appearing, run the Flipper CLI `log` command while the
   app starts and look for `GapDriver: set_discoverable failed` or
   `GattChar: Failed to add`.
+- The DS18B20 powers up with 85.0 °C in its scratchpad. The app rejects the
+  exact power-on scratchpad (factory TH/TL/config), so a sensor reset shows
+  `measuring...` instead of a false 85 °C spike. Negative temperatures are
+  decoded from the raw 16-bit two's-complement register.
 - The vendored library has one local portability change: two `0.5` constants
   in `lib/phyphox/core/Serializer.cpp` are cast to `double` because the
   Flipper build uses `-Wdouble-promotion` with `-fsingle-precision-constant`.

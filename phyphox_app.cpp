@@ -24,11 +24,6 @@
 #define DS18B20_CMD_CONVERT         0x44U
 #define DS18B20_CMD_READ_SCRATCHPAD 0xbeU
 
-#define DS18B20_CFG_RESOLUTION_POS  5U
-#define DS18B20_CFG_RESOLUTION_MASK 0x03U
-#define DS18B20_DECIMAL_PART_MASK   0x0fU
-#define DS18B20_SIGN_MASK           0xf0U
-
 typedef union {
     struct {
         uint8_t temp_lsb;
@@ -82,12 +77,14 @@ static bool ds18b20_read(AppContext* app, OneWireHost* onewire) {
     FURI_CRITICAL_ENTER();
 
     bool success = false;
+    bool present = false;
     do {
         DS18B20Scratchpad buf;
         size_t attempts_left = 10;
 
         do {
             if(!onewire_host_reset(onewire)) continue;
+            present = true;
             onewire_host_write(onewire, DS18B20_CMD_SKIP_ROM);
             onewire_host_write(onewire, DS18B20_CMD_READ_SCRATCHPAD);
             onewire_host_read_bytes(onewire, buf.bytes, sizeof(buf.bytes));
@@ -97,24 +94,37 @@ static bool ds18b20_read(AppContext* app, OneWireHost* onewire) {
 
         if(attempts_left == 0) break;
 
-        const uint8_t resolution =
-            (buf.fields.config >> DS18B20_CFG_RESOLUTION_POS) & DS18B20_CFG_RESOLUTION_MASK;
-        const uint8_t decimal_mask =
-            (DS18B20_DECIMAL_PART_MASK << (DS18B20_CFG_RESOLUTION_MASK - resolution)) &
-            DS18B20_DECIMAL_PART_MASK;
-        const uint8_t integer_part =
-            (buf.fields.temp_msb << 4U) | (buf.fields.temp_lsb >> 4U);
-        const uint8_t decimal_part = buf.fields.temp_lsb & decimal_mask;
-        const bool negative = (buf.fields.temp_msb & DS18B20_SIGN_MASK) != 0;
-        const float abs_celsius = integer_part + decimal_part / 16.0f;
+        /*
+         * The temperature register is 16-bit two's complement with 0.0625 C
+         * per LSB at 12-bit resolution (unused low bits are zero at lower
+         * resolutions). Do not use the integer/decimal split from
+         * example_thermo: it stores the integer part in a uint8_t, which
+         * truncates the sign bits and turns -1.0 C into -255.0 C.
+         */
+        const int16_t raw =
+            (int16_t)(((uint16_t)buf.fields.temp_msb << 8) | buf.fields.temp_lsb);
 
-        app->temp_celsius = negative ? -abs_celsius : abs_celsius;
+        /*
+         * The power-on/reset scratchpad is exactly 85.0 C with factory
+         * TH/TL/config; a conversion that did not run leaves it unchanged.
+         * Its CRC is valid, so it has to be rejected explicitly.
+         * shortcut: a genuine 85.0 C with untouched TH/TL/config is also
+         * suppressed; this app targets ambient temperatures.
+         */
+        const bool power_on_reset =
+            raw == 0x0550 && buf.fields.user_alarm_high == 0x4B &&
+            buf.fields.user_alarm_low == 0x46 && buf.fields.config == 0x7F &&
+            buf.fields.reserved[0] == 0xFF && buf.fields.reserved[1] == 0x0C &&
+            buf.fields.reserved[2] == 0x10;
+        if(power_on_reset) break;
+
+        app->temp_celsius = raw / 16.0f;
         success = true;
     } while(false);
 
     FURI_CRITICAL_EXIT();
 
-    app->has_device = success;
+    app->has_device = present;
     app->has_reading = success;
     return success;
 }
