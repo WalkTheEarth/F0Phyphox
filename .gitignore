@@ -2,3 +2,6 @@
 dist/
 *.fap
 __pycache__/
+
+# Host test binary
+tests/sensor_math_test

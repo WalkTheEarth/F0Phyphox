@@ -22,6 +22,9 @@ public:
     /** Restore the default Flipper BLE profile. Safe to call twice. */
     void stop();
 
+    /** Drop the current connection so the phone reconnects and re-fetches the experiment. */
+    void disconnect();
+
     bool is_advertising() const;
     bool has_error() const;
 

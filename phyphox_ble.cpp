@@ -370,6 +370,12 @@ void FlipperTransport::stop() {
     state->advertising = false;
 }
 
+void FlipperTransport::disconnect() {
+    if(state && state->bt && state->connected) {
+        bt_disconnect(state->bt);
+    }
+}
+
 bool FlipperTransport::begin(
     const phyphox::GattLayout& layout,
     phyphox::TransportListener& listener) {
